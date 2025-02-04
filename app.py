@@ -39,16 +39,24 @@ if st.button("Get Earnings Data"):
             imp_earn_mv = earnings_data.get("impErnMv")
             abs_avg_earn_mv = earnings_data.get("absAvgErnMv")
             next_earn_date = earnings_data.get("nextErn")
-            historical_moves = {f"ernMv{i}": earnings_data.get(f"ernMv{i}") for i in range(1, 13)}
+
+            # Handle incorrect earnings date
+            if next_earn_date == "0000-00-00":
+                next_earn_date = "N/A"
+
+            # Extract historical earnings moves
+            historical_moves = {f"Earnings #{i}": earnings_data.get(f"ernMv{i}") for i in range(1, 13)}
 
             # Display fetched data
             st.subheader(f"📌 Data for {ticker}")
-            st.metric("📈 Current Implied Earnings Move", f"{imp_earn_mv}%")
-            st.metric("📉 Average Historical Earnings Move", f"{abs_avg_earn_mv}%")
+            st.metric("📈 Current Implied Earnings Move", f"{imp_earn_mv:.2f}%")
+            st.metric("📉 Average Historical Earnings Move", f"{abs_avg_earn_mv:.2f}%")
             st.metric("📅 Next Earnings Date", next_earn_date)
 
-            # Historical Earnings Moves Table
+            # Format historical earnings moves as percentages
             df = pd.DataFrame(list(historical_moves.items()), columns=["Earnings Move", "Percentage"])
-            df["Earnings Move"] = df["Earnings Move"].str.replace("ernMv", "Earnings #")
+            df["Percentage"] = df["Percentage"].apply(lambda x: f"{x:.2f}%" if pd.notna(x) else "N/A")
+
+            # Display table
             st.table(df)
 
