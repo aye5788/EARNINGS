@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import datetime
 
 # Load API Token securely from Streamlit Secrets
 API_TOKEN = st.secrets["orats"]["api_token"]
@@ -36,13 +37,21 @@ if st.button("Get Earnings Data"):
     with st.spinner("Fetching data..."):
         earnings_data = fetch_earnings_data(ticker)
         if earnings_data:
+            # Extract key values
             imp_earn_mv = earnings_data.get("impErnMv")
             abs_avg_earn_mv = earnings_data.get("absAvgErnMv")
             next_earn_date = earnings_data.get("nextErn")
+            days_to_next_earn = earnings_data.get("daysToNextErn")
+            last_earn_date = earnings_data.get("lastErn")
 
-            # Handle incorrect earnings date
-            if next_earn_date == "0000-00-00":
-                next_earn_date = "N/A"
+            # Fix the next earnings date issue
+            if next_earn_date == "0000-00-00" and isinstance(days_to_next_earn, (int, float)):
+                if days_to_next_earn > 0 and last_earn_date not in [None, "0000-00-00"]:
+                    last_earn_dt = datetime.datetime.strptime(last_earn_date, "%Y-%m-%d")
+                    next_earn_dt = last_earn_dt + datetime.timedelta(days=int(days_to_next_earn))
+                    next_earn_date = next_earn_dt.strftime("%Y-%m-%d")
+                else:
+                    next_earn_date = "N/A"  # No upcoming earnings detected
 
             # Extract historical earnings moves
             historical_moves = {f"Earnings #{i}": earnings_data.get(f"ernMv{i}") for i in range(1, 13)}
